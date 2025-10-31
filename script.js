@@ -4,24 +4,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const responseMessage = document.getElementById('responseMessage');
     const languageLinks = document.querySelectorAll('.language-switcher a');
     let currentTranslations = {};
-    let currentLang = 'en'; // Added for completeness
+    let currentLang = 'en'; // English: Variable for current language / Romana: Variabila pentru limba curentă
 
     /**
-     * NOU: Funcție pentru a genera efectul de litere zburătoare.
+     * English: Function to create the flying characters background effect.
+     * Romana: Funcție pentru a crea efectul de fundal cu caractere zburătoare.
      */
     const createFlyingChars = () => {
         const container = document.querySelector('.flying-chars');
         if (!container) return;
         
         const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890*+@#&{}[]";
-        const charCount = 50; // Numărul de caractere
+        const charCount = 50; // Romana: Numărul de caractere
 
         for (let i = 0; i < charCount; i++) {
             const li = document.createElement('li');
             
             li.style.left = `${Math.random() * 100}%`;
             li.style.fontSize = `${Math.random() * 1.5 + 0.5}em`;
-            li.style.animationDuration = `${Math.random() * 20 + 15}s`; // între 15s și 35s
+            li.style.animationDuration = `${Math.random() * 20 + 15}s`; // English: between 15s and 35s
             li.style.animationDelay = `${Math.random() * 15}s`;
             
             li.textContent = chars.charAt(Math.floor(Math.random() * chars.length));
@@ -29,23 +30,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    /**
+     * English: Function to change the interface language by loading the corresponding JSON file.
+     * Romana: Funcție pentru a schimba limba interfeței prin încărcarea fișierului JSON corespunzător.
+     */
     const changeLanguage = async (lang) => {
         try {
             const response = await fetch(`lang/${lang}.json`);
-            if (!response.ok) throw new Error(`Fișierul de traducere lang/${lang}.json nu a fost găsit.`);
+            // Romana: Verifică dacă fișierul de traducere a fost găsit.
+            if (!response.ok) throw new Error(`Fișierul de traducere lang/${lang}.json nu a fost găsit.`); 
             const translations = await response.json();
             currentTranslations = translations;
-            currentLang = lang; // Set current language
+            currentLang = lang;
             document.querySelectorAll('[data-lang-key]').forEach(element => {
                 const key = element.getAttribute('data-lang-key');
+                // English: Update element content based on translation key.
                 if (translations[key]) element.textContent = translations[key];
             });
             document.documentElement.lang = lang;
-            
-            // Clear general error message on language change
+
+            // English: Clear general error message on language change.
             responseMessage.textContent = '';
             responseMessage.className = '';
-        } catch (error) { console.error('Eroare la schimbarea limbii:', error); }
+        } catch (error) { console.error('Error changing language:', error); } // English comment
     };
 
     languageLinks.forEach(link => {
@@ -53,27 +60,37 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const langCode = link.getAttribute('data-lang-code');
             changeLanguage(langCode);
-            localStorage.setItem('siteLang', langCode); // Save language
+            localStorage.setItem('siteLang', langCode); // English: Save language
         });
     });
 
+    /**
+     * English: Function for client-side field validation (Name, Email, Message).
+     * Romana: Funcție pentru validarea câmpurilor pe partea clientului (Nume, Email, Mesaj).
+     */
     const validateForm = () => {
         let isValid = true;
-        // Clear all errors
+        
+        // English: Clear previous errors.
         document.querySelectorAll('.error-message').forEach(msg => {
              msg.textContent = '';
              msg.classList.remove('visible');
         });
         document.querySelectorAll('.form-group .error').forEach(input => input.classList.remove('error'));
-        
+
         const fieldsToValidate = { 'name': 'errorRequired', 'message': 'errorRequired', 'email': 'errorEmail' };
 
         for (const id in fieldsToValidate) {
             const input = document.getElementById(id);
             const errorContainer = input.nextElementSibling;
             let hasError = false, errorKey = '';
-            if (input.value.trim() === '') { hasError = true; errorKey = 'errorRequired'; }
-            else if (id === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value)) { hasError = true; errorKey = 'errorEmail'; }
+            
+            if (input.value.trim() === '') { 
+                hasError = true; errorKey = 'errorRequired'; 
+            } else if (id === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value)) { 
+                hasError = true; errorKey = 'errorEmail'; 
+            }
+
             if (hasError) {
                 isValid = false; input.classList.add('error');
                 errorContainer.textContent = currentTranslations[errorKey] || 'Field required/Invalid email'; 
@@ -81,55 +98,47 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // reCAPTCHA Validation
-        const recaptchaResponse = typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse() : '';
-        if (recaptchaResponse.length === 0) {
-            isValid = false;
-            const recaptchaErrorContainer = document.querySelector('#recaptcha-container .error-message');
-            if(recaptchaErrorContainer) {
-                recaptchaErrorContainer.textContent = currentTranslations.errorCaptcha || 'Please complete the reCAPTCHA verification.'; 
-                recaptchaErrorContainer.classList.add('visible');
-            }
-        }
+        // English: reCAPTCHA validation is completely removed as it's disabled on Formspree.
+        // Romana: Validarea reCAPTCHA este complet eliminată, deoarece este dezactivată pe Formspree.
+        
         return isValid;
     };
 
+    /**
+     * English: Form submission logic.
+     * Romana: Logica de trimitere a formularului.
+     */
     feedbackForm.addEventListener('submit', (e) => {
-        // Step 1: Prevent default submission temporarily to run validation
+        // English: Prevent default submission temporarily to run validation.
         e.preventDefault(); 
         
         if (!validateForm()) {
-            // Step 2a: Validation FAILED
+            // English: Validation FAILED. Show error message.
             responseMessage.textContent = currentTranslations.errorForm || 'Please correct the errors in the form.';
-            responseMessage.className = 'error visible'; // Add 'visible' class
-            
-            // Reset reCAPTCHA so the user can try again
-            if (typeof grecaptcha !== 'undefined') {
-                 grecaptcha.reset();
-            }
-            
-            // Focus on first error field
+            responseMessage.className = 'error visible'; 
+
+            // English: Focus on first error field for accessibility.
             const firstErrorField = document.querySelector('.form-group .error');
             if (firstErrorField) {
                 firstErrorField.focus();
             }
             
         } else {
-            // Step 2b: Validation PASSED
-            responseMessage.textContent = 'Sending...';
-            responseMessage.className = 'success visible'; // Show sending message
+            // English: Validation PASSED. Manually trigger native submission.
+            responseMessage.textContent = currentTranslations.sendingMessage || 'Sending...';
+            responseMessage.className = 'success visible'; 
             
-            // CRITICAL: Manually trigger the native form submission to Formspree
-            // This is the missing step that ensures data is sent.
-            // Using a short timeout ensures the browser finishes DOM updates before navigating.
+            // CRITICAL FIX: Manually trigger the native form submission to Formspree.
+            // Romana: Remediere critică: Declanșează manual trimiterea nativă a formularului către Formspree.
             setTimeout(() => {
                 e.target.submit(); 
             }, 100); 
         }
     });
 
-    // --- Initialization ---
+    // --- Initialization / Inițializare ---
     createFlyingChars(); 
+    // English: Load saved language or default to 'en'.
     const savedLang = localStorage.getItem('siteLang') || 'en';
     changeLanguage(savedLang);
 });
